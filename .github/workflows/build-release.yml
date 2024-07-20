@@ -3,7 +3,7 @@ name: 'publish'
 on:
   push:
     branches:
-      - '\d+\.\d+\.\d+'
+      - 'disabled'
 
 jobs:
   publish-tauri:
