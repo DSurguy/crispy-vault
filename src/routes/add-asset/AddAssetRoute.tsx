@@ -1,6 +1,7 @@
 import { useForm } from "@tanstack/react-form"
 import TextInput from "../../components/form/TextInput"
 import { useNavigate } from "@tanstack/react-router"
+import { invoke } from "@tauri-apps/api"
 
 export default function AddAssetRoute() {
   const navigate = useNavigate({ from: '/add-asset' })
@@ -8,9 +9,17 @@ export default function AddAssetRoute() {
     defaultValues: {
       name: '',
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: async ({ value: { name } }) => {
       // TODO: invoke create asset handler
-      navigate({ to: '/' })
+      const uuid = await invoke("create_asset", {
+        name
+      });
+      navigate({
+        to: '/',
+        search: {
+          uuid
+        }
+      })
     },
   })
 

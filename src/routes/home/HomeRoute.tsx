@@ -1,5 +1,11 @@
-import { Link } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
+
+const routeApi = getRouteApi('/')
 
 export default function HomeRoute() {
-  return <div className="p-4"><Link to="/add-asset">Add Asset</Link></div>
+  const { uuid } = routeApi.useSearch() as { uuid?: string };
+  return <div className="p-4">
+    <div><Link to="/add-asset">Add Asset</Link></div>
+    { uuid && <div className="mt-2">You created an asset with uuid <code>{uuid}</code></div> }
+  </div>
 }
