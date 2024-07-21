@@ -3,9 +3,10 @@
 
 use std::{fs, path::Path, sync::Mutex};
 
-use rusqlite::Connection;
+use rusqlite::{Connection};
+use serde::Serialize;
 use tauri::{App, Manager};
-use uuid::Uuid;
+use uuid::{Uuid};
 
 struct DatabaseState {
     connection: Connection
@@ -29,6 +30,37 @@ fn create_asset(state: tauri::State<Mutex<DatabaseState>>, name: &str) -> String
         (name, format!("{}", formatted_uuid)),
     ).expect("Unable to insert new asset");
     return formatted_uuid;
+}
+
+#[derive(Serialize)]
+struct Asset {
+    #[serde(skip_serializing)]
+    rowid: u64,
+    name: String,
+    uuid: String
+}
+
+#[tauri::command]
+fn list_assets(state: tauri::State<Mutex<DatabaseState>>) -> Vec<Asset> {
+    let connection = &state.lock().unwrap().connection;
+    let mut stmt = connection.prepare("SELECT rowid, name, uuid FROM asset LIMIT 100").expect("Unable to prepare list_assets SELECT");
+    let rows = stmt.query_map((), |row| {
+        let rowid: u64 = row.get::<usize, u64>(0).expect("list_assets::Unable to retrieve rowid from row");
+        let name: String = row.get::<usize, String>(1).expect("list_assets::Unable to retrieve name from row");
+        let uuid: String = row.get::<usize, String>(2).expect("list_assets::Unable to retrieve uuid from row");
+
+        Ok(Asset {
+            rowid,
+            name,
+            uuid
+        })
+    }).expect("Unable to execute list_assets query");
+    
+    let mut output = Vec::new();
+    for asset in rows {
+        output.push(asset.expect("asset"));
+    }
+    return output;
 }
 
 fn recreate_database(app: &App) -> Connection {
@@ -55,7 +87,7 @@ fn main() {
             app.manage(Mutex::new(DatabaseState::new(db_connection)));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![create_asset])
+        .invoke_handler(tauri::generate_handler![create_asset, list_assets])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

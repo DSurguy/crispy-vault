@@ -10,7 +10,6 @@ export default function AddAssetRoute() {
       name: '',
     },
     onSubmit: async ({ value: { name } }) => {
-      // TODO: invoke create asset handler
       const uuid = await invoke("create_asset", {
         name
       }) as string;
