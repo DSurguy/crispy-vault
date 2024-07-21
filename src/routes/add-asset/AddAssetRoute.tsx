@@ -1,10 +1,10 @@
 import { useForm } from "@tanstack/react-form"
 import TextInput from "../../components/form/TextInput"
-import { useNavigate } from "@tanstack/react-router"
+import { useNavigate } from "react-router-dom"
 import { invoke } from "@tauri-apps/api"
 
 export default function AddAssetRoute() {
-  const navigate = useNavigate({ from: '/add-asset' })
+  const navigate = useNavigate()
   const form = useForm({
     defaultValues: {
       name: '',
@@ -13,12 +13,12 @@ export default function AddAssetRoute() {
       // TODO: invoke create asset handler
       const uuid = await invoke("create_asset", {
         name
-      });
+      }) as string;
+      const search = new URLSearchParams()
+      search.set('uuid', uuid)
       navigate({
-        to: '/',
-        search: {
-          uuid
-        }
+        pathname: '/',
+        search: search.toString()
       })
     },
   })
