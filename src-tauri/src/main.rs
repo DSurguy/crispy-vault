@@ -15,9 +15,9 @@ fn recreate_database(app: &App) {
         fs::remove_file(&db_path).expect("Unable to remove database file");
         // TODO: May need to wait for file to not exist in case of async removal
     }
-    let db_connection = Connection::open(db_path).expect("Unable to get database connection");
+    let db_connection = Connection::open(&db_path).expect("Unable to get database connection");
     let db_source_path = app.path_resolver().resolve_resource("resources/sqlite-setup.sql").expect("Unable to find db source file");
-    let contents = fs::read_to_string(db_source_path)
+    let contents = fs::read_to_string(&db_source_path)
         .expect("Should have been able to read the file");
     db_connection.execute_batch(&contents).expect("Unable to bootstrap database");
 }   
