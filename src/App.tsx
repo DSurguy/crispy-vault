@@ -1,53 +1,23 @@
-import { useEffect, useState } from 'react';
-import { open } from '@tauri-apps/api/dialog';
-import { open as shellOpen } from '@tauri-apps/api/shell';
-import { copyFile } from '@tauri-apps/api/fs';
-import { appDataDir } from '@tauri-apps/api/path';
+import { createRootRoute, createRouter, Outlet, RouterProvider } from '@tanstack/react-router';
+import { TanStackRouterDevtools } from '@tanstack/router-devtools';
+import homeRouteFactory from './routes/home/route';
+import addAssetRouteFactory from './routes/add-asset/route';
 
-function App() {
-  const [dataDir, setDataDir] = useState('')
+const rootRoute = createRootRoute({
+  component: () => (
+    <>
+      <Outlet />
+      <TanStackRouterDevtools />
+    </>
+  ),
+})
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setDataDir(await appDataDir())
-      } catch (e) {
-        console.error(e);
-      }
-    })()
-  }, [])
+const homeRoute = homeRouteFactory(rootRoute)
+const addAssetRoute = addAssetRouteFactory(rootRoute)
 
-  const handleGetFileClick = async () => {
-    try {
-      const selected = await open({
-        multiple: false,
-      }) as string;
+const routeTree = rootRoute.addChildren([homeRoute, addAssetRoute])
+const router = createRouter({ routeTree })
 
-      if ( selected ) {
-        await copyFile(selected, dataDir + '/' + selected.split('/').slice(-1)[0])
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  const handleOpenDataDirClick = async () => {
-    try {
-      await shellOpen(dataDir);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  return (
-    <div className="p-4">
-      <div className="mb-2">
-        <span>Data Directory: {dataDir || 'Unknown'}</span>
-        { dataDir && <button className='ml-4 underline' onClick={handleOpenDataDirClick}>Open data dir</button>}
-      </div>
-      { dataDir && <button className="border-gray-800 border rounded-md p-2" onClick={handleGetFileClick}>Copy a file to data dir</button>}
-    </div>
-  );
+export default function App() {
+  return <RouterProvider router={router} />;
 }
-
-export default App;
