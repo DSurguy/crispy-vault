@@ -26,6 +26,10 @@ export const useCleanSearchParams = <T extends z.ZodTypeAny>(schema: T) => {
     searchError,
     rawSearchParams: searchParams,
   }, setSearchParams] as [{
+    searchParams: null,
+    searchError: null,
+    rawSearchParams: URLSearchParams
+  } | {
     searchParams: z.infer<T>,
     searchError: null,
     rawSearchParams: URLSearchParams
