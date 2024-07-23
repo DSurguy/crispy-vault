@@ -1,11 +1,12 @@
-import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import HomeRoute from './routes/home/HomeRoute';
 import AddAssetRoute from './routes/add-asset/AddAssetRoute';
+import RootRoute from './routes/root/RootRoute';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Outlet />,
+    element: <RootRoute />,
     children: [
       {
         path: '',
