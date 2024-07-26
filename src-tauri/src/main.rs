@@ -20,6 +20,20 @@ impl DatabaseState {
     }
 }
 
+#[derive(Serialize)]
+struct InvokeError {
+    message: String,
+    status: String
+}
+
+#[derive(Serialize)]
+struct Asset {
+    #[serde(skip_serializing)]
+    rowid: u64,
+    name: String,
+    uuid: String
+}
+
 #[tauri::command]
 fn create_asset(state: tauri::State<Mutex<DatabaseState>>, name: &str) -> String {
     let uuid = Uuid::new_v4();
@@ -30,14 +44,6 @@ fn create_asset(state: tauri::State<Mutex<DatabaseState>>, name: &str) -> String
         (name, format!("{}", formatted_uuid)),
     ).expect("Unable to insert new asset");
     return formatted_uuid;
-}
-
-#[derive(Serialize)]
-struct Asset {
-    #[serde(skip_serializing)]
-    rowid: u64,
-    name: String,
-    uuid: String
 }
 
 #[tauri::command]
@@ -63,6 +69,50 @@ fn list_assets(state: tauri::State<Mutex<DatabaseState>>) -> Vec<Asset> {
     return output;
 }
 
+#[tauri::command]
+fn get_asset(state: tauri::State<Mutex<DatabaseState>>, uuid: &str) -> Result<Asset, InvokeError> {
+    let connection = &state.lock().unwrap().connection;
+    let mut stmt = connection.prepare("SELECT rowid, name, uuid FROM asset WHERE uuid = ?1").expect("Unable to prepare list_assets SELECT");
+    let wrapped_rows = stmt.query_map([uuid], |row| {
+        let rowid: u64 = row.get::<usize, u64>(0).expect("list_assets::Unable to retrieve rowid from row");
+        let name: String = row.get::<usize, String>(1).expect("list_assets::Unable to retrieve name from row");
+        let uuid: String = row.get::<usize, String>(2).expect("list_assets::Unable to retrieve uuid from row");
+
+        Ok(Asset {
+            rowid,
+            name,
+            uuid
+        })
+    });
+
+    let mut rows = match wrapped_rows {
+        Err(_e) => return Err(InvokeError {
+            message: "Unable to execute get_asset query".into(),
+            status: "500".into()
+        }),
+        Ok(asset) => asset
+    };
+    
+    let asset_result = match rows.next() {
+        None => return Err(InvokeError {
+            message: "No assets found matching uuid".into(),
+            status: "404".into()
+        }),
+        Some(v) => v
+    };
+
+    let asset = match asset_result {
+        Err(_e) => return Err(InvokeError {
+            message: "Error unwrapping asset result".into(),
+            status: "500".into()
+        }),
+        Ok(val) => val
+    };
+    
+    return Ok(asset);
+}
+
+
 fn recreate_database(app: &App) -> Connection {
     let data_dir = app.path_resolver().app_data_dir().expect("Unable to retrieve data dir");
     let db_path = data_dir.join("test-database.db");
@@ -87,7 +137,7 @@ fn main() {
             app.manage(Mutex::new(DatabaseState::new(db_connection)));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![create_asset, list_assets])
+        .invoke_handler(tauri::generate_handler![create_asset, get_asset, list_assets])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

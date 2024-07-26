@@ -8,16 +8,14 @@ export default function AddAssetRoute() {
   const form = useForm({
     defaultValues: {
       name: '',
+      file: '',
     },
     onSubmit: async ({ value: { name } }) => {
       const uuid = await invoke("create_asset", {
         name
       }) as string;
-      const search = new URLSearchParams()
-      search.set('uuid', uuid)
       navigate({
-        pathname: '/',
-        search: search.toString()
+        pathname: `/asset/${uuid}`
       })
     },
   })

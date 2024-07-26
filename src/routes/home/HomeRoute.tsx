@@ -29,16 +29,6 @@ export default function HomeRoute() {
 
   return <div className="p-4">
     { uuid && <div className="p-2 bg-green-200 text-green-800">You created an asset with uuid <code className="font-bold">{uuid}</code></div> }
-    <div className="mt-2">
-      <Link className="block border rounded-sm p-2 w-32 flex justify-center items-center" to="/add-asset">Add Asset</Link>
-    </div>
-    { error && <div className="mt-2 text-red-600">{error}</div>}
-    <div className="mt-4">
-      <h2 className="border-b pb-1 border-gray-500">Assets</h2>
-      {assets.map(({ uuid, name }) => <div className="p-1 odd:bg-gray-200">
-        <div className="text-xs">{uuid}</div>
-        <div>{name}</div>
-      </div>)}
-    </div>
+    <Link to={'/list-assets'}>Asset List</Link>
   </div>
 }
