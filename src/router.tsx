@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Link, Outlet } from 'react-router-dom';
+import { TbHome } from "react-icons/tb";
 import HomeRoute from './routes/home/HomeRoute';
 import AddAssetRoute from './routes/add-asset/AddAssetRoute';
 import RootRoute from './routes/root/RootRoute';
@@ -12,6 +13,9 @@ export const router = createBrowserRouter([
     path: '/',
     element: <RootRoute />,
     errorElement: <RouteError />,
+    handle: {
+      crumb: () => <Link to="/"><TbHome /></Link>
+    },
     children: [
       {
         path: '',
@@ -22,23 +26,32 @@ export const router = createBrowserRouter([
         element: <AddAssetRoute />
       },
       {
-        path: 'list-assets',
-        element: <ListAssetsRoute />
-      },
-      {
-        path: 'asset/:assetUuid',
-        element: <AssetRoute />,
-        loader: async ({ params: { assetUuid }}) => {
-          if( !assetUuid ) throw new Error("Unable to load asset, asset ID is undefined");
-          const asset = await invoke('get_asset', {
-            uuid: assetUuid
-          });
-          return {
-            asset
-          }
+        path: 'assets',
+        element: <Outlet />,
+        handle: {
+          crumb: () => <Link className="underline" to="/assets">Assets</Link>
         },
-        errorElement: <RouteError />
-      }
+        children: [
+          {
+            path: '',
+            element: <ListAssetsRoute />,
+          },
+          {
+            path: ':assetUuid',
+            element: <AssetRoute />,
+            loader: async ({ params: { assetUuid }}) => {
+              if( !assetUuid ) throw new Error("Unable to load asset, asset ID is undefined");
+              const asset = await invoke('get_asset', {
+                uuid: assetUuid
+              });
+              return {
+                asset
+              }
+            },
+            errorElement: <RouteError />
+          }
+        ]
+      },
     ]
   }
 ])

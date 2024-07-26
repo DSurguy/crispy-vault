@@ -29,6 +29,6 @@ export default function HomeRoute() {
 
   return <div className="p-4">
     { uuid && <div className="p-2 bg-green-200 text-green-800">You created an asset with uuid <code className="font-bold">{uuid}</code></div> }
-    <Link to={'/list-assets'}>Asset List</Link>
+    <Link to={'/assets'}>Asset List</Link>
   </div>
 }

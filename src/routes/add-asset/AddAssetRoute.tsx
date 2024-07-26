@@ -15,7 +15,7 @@ export default function AddAssetRoute() {
         name
       }) as string;
       navigate({
-        pathname: `/asset/${uuid}`
+        pathname: `/assets/${uuid}`
       })
     },
   })
