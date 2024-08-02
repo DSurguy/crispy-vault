@@ -14,6 +14,8 @@ pub struct AssetFile {
 }
 
 pub mod commands {
+    use std::fs::{copy, create_dir_all, metadata};
+    use std::path::Path;
     use std::sync::Mutex;
     use uuid::Uuid;
     use super::{Asset, AssetFile};
@@ -95,9 +97,70 @@ pub mod commands {
     }
 
     #[tauri::command]
-    pub fn add_file_to_asset(_state: tauri::State<Mutex<DatabaseState>>, uuid: &str, name: &str, description: &str, _file_path: &str) -> Result<AssetFile, InvokeError> {
+    pub fn add_file_to_asset(
+        app_handle: tauri::AppHandle,
+        _state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        name: &str,
+        description: &str,
+        file_path: &str
+    ) -> Result<AssetFile, InvokeError> {
+        let uuid = Uuid::new_v4().to_string();
+        
+        // TODO: copy file from path into vault
+        let data_dir = app_handle.path_resolver().app_data_dir().expect("Unable to retrieve data dir");
+        
+        // Create asset dir if not exists
+        create_dir_all(data_dir.join(format!("assets/{asset_uuid}"))).expect("Unable to create asset directory");
+        
+        // Verify file at file_path exists
+        let file_meta = match metadata(file_path) {
+            Err(_e) => return Err(InvokeError {
+                message: "Unable to read metadata of file at file_path".into(),
+                status: "400".into()
+            }),
+            Ok(v) => v
+        };
+
+        if file_meta.is_file() == false {
+            return Err(InvokeError {
+                message: "Given path is not a file".into(),
+                status: "400".into()
+            });
+        }
+
+        // Get extension from file_path
+        let extension = match Path::new(file_path).extension() {
+            None => return Err(InvokeError {
+                message: "Unable to get extension from file".into(),
+                status: "500".into()
+            }),
+            Some(v) => match v.to_str() {
+                None => return Err(InvokeError {
+                    message: "Unable to get extension from file".into(),
+                    status: "500".into()
+                }),
+                Some(v) => v 
+            }
+        };
+
+        // Copy the file to uuid.<ext>
+        let target_file = format!("assets/{asset_uuid}/{uuid}.{extension}");
+        let copy_result = copy(file_path, data_dir.join(target_file));
+
+        match copy_result {
+            Err(_e) => return Err(InvokeError {
+                message: "Unable to get extension from file".into(),
+                status: "500".into()
+            }),
+            Ok(_v) => {}
+        }
+        // TODO: Add file to DB
+
+        // TODO: Add entry to intersection table
+
         return Ok(AssetFile {
-            uuid: uuid.to_string(),
+            uuid,
             name: name.to_string(),
             description: description.to_string()
         });
