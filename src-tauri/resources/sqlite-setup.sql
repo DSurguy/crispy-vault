@@ -11,15 +11,15 @@ CREATE TABLE tag (
 
 CREATE VIRTUAL TABLE tag_fts USING fts5(text, content=tag, content_rowid=rowid);
 
-CREATE TABLE tag_to_asset_file (
+CREATE TABLE tag_to_asset (
     tag_id REFERENCES tag (rowid),
     asset_id REFERENCES asset (rowid)
 );
 
 CREATE TABLE asset_file (
+    uuid TEXT UNIQUE ON CONFLICT ABORT NOT NULL,
     name TEXT NOT NULL,
-    filename TEXT NOT NULL,
-    type TEXT NOT NULL -- session, master, release, other
+    description TEXT NOT NULL
 );
 
 CREATE TABLE asset_to_asset_file (
