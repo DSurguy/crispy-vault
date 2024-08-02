@@ -7,6 +7,7 @@ import RootRoute from './routes/root/RootRoute';
 import ListAssetsRoute from './routes/list-assets/ListAssetsRoute';
 import AssetRoute from './routes/asset/AssetRoute';
 import RouteError from './components/RouteError';
+import { Asset } from './types';
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +48,9 @@ export const router = createBrowserRouter([
               return {
                 asset
               }
+            },
+            handle: {
+              crumb: ({ asset }: { asset: Asset }) => asset ? <Link className="underline" to={`/assets/${asset.uuid}`}>{asset.name}</Link> : null
             },
             errorElement: <RouteError />
           }

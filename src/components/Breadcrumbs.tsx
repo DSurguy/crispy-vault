@@ -2,7 +2,7 @@ import { useMatches } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 
 type Handle = {
-  crumb?: () => React.ReactNode | React.ReactNode[]
+  crumb?: (data: any) => React.ReactNode | React.ReactNode[]
 } | undefined;
 
 type BreadcrumbsProps = {
@@ -21,14 +21,15 @@ export function Breadcrumbs({ className }: BreadcrumbsProps) {
     // data to each one
     .map((match) => ({
       id: match.id,
-      content: (match.handle as Handle)!.crumb!()
+      content: (match.handle as Handle)!.crumb!(match.data)
     }));
 
   return (
     <nav className={mergedClassName}>
-      {crumbs.map((crumb, index) => (
-        <div key={index} className="flex items-center mr-2">{crumb.content}<div className="m-1">/</div></div>
-      ))}
+      {crumbs.map((crumb, index) => {
+        const divider = <div className="m-1">/</div>
+        return <div key={index} className="flex items-center mr-2">{crumb.content}{index < crumbs.length-1 ? divider : null}</div>
+      })}
     </nav>
   );
 }
