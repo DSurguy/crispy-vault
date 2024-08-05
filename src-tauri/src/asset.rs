@@ -1,12 +1,14 @@
 use serde::Serialize;
 
 #[derive(Serialize)]
+#[derive(Clone)]
 pub struct Asset {
     pub name: String,
     pub uuid: String
 }
 
 #[derive(Serialize)]
+#[derive(Clone)]
 pub struct AssetFile {
     pub name: String,
     pub uuid: String,
@@ -28,7 +30,7 @@ pub mod commands {
         let formatted_uuid = format!("{}", uuid.as_hyphenated());
         let connection = &state.lock().unwrap().connection;
         connection.execute(
-            "INSERT INTO asset (name, uuid) VALUES (?1, ?2)",
+            "INSERT INTO asset (name, uuid, last_update) VALUES (?1, ?2, datetime('now'))",
             (name, format!("{}", formatted_uuid)),
         )?;
         return Ok(formatted_uuid);
@@ -42,7 +44,7 @@ pub mod commands {
 
     fn _list_assets(state: tauri::State<Mutex<DatabaseState>>) -> anyhow::Result<Vec<Asset>> {
         let connection = &state.lock().unwrap().connection;
-        let mut stmt = connection.prepare("SELECT rowid, name, uuid FROM asset LIMIT 100").expect("Unable to prepare list_assets SELECT");
+        let mut stmt = connection.prepare("SELECT rowid, name, uuid FROM asset LIMIT 20").expect("Unable to prepare list_assets SELECT");
         let rows = stmt.query_map((), |row| {
             let name: String = row.get::<usize, String>(1)?;
             let uuid: String = row.get::<usize, String>(2)?;
@@ -127,11 +129,13 @@ pub mod commands {
         tx.execute("INSERT INTO asset_file ( \
             uuid, \
             name, \
-            description \
+            description, \
+            last_update \
         ) VALUES ( \
             ?1, \
             ?2, \
-            ?3 \
+            ?3, \
+            datetime('now')
         );", [&uuid, name, description])?;
 
         tx.execute("INSERT INTO asset_to_asset_file ( \
@@ -161,6 +165,55 @@ pub mod commands {
         file_path: &str
     ) -> anyhow_tauri::TAResult<AssetFile> {
         let out = _add_file_to_asset(app_handle, state, asset_uuid, name, description, file_path)?;
+        return Ok(out);
+    }
+
+    fn _list_asset_files(
+        state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        page: u32
+    ) -> anyhow::Result<Vec<AssetFile>> {
+        let offset: u32 = page * 20;
+        let offset_param: &str = &offset.to_string();
+        let connection = &state.lock().unwrap().connection;
+        
+        let mut stmt = connection.prepare("\
+            SELECT uuid, name, description \
+            FROM asset_file \
+            INNER JOIN asset_to_asset_file aaf ON asset_file.uuid = aaf.asset_file_id AND aaf.asset_id = ?1 \
+            ORDER BY last_update DESC \
+            LIMIT 20 OFFSET ?2
+        ")?;
+
+        let rows = stmt.query_map([asset_uuid, offset_param], |row| {
+            let uuid: String = row.get(0)?;
+            let name: String = row.get(1)?;
+            let description: String = row.get(2)?;
+
+
+            Ok(AssetFile {
+                uuid,
+                name,
+                description
+            })
+        })?;
+
+        let mut out = Vec::<AssetFile>::new();
+
+        for file in rows {
+            out.push(file?);
+        }
+
+        Ok(out)
+    }
+
+    #[tauri::command]
+    pub fn list_asset_files(
+        state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        page: u32
+    ) -> anyhow_tauri::TAResult<Vec<AssetFile>> {
+        let out = _list_asset_files(state, asset_uuid, page)?;
         return Ok(out);
     }
 }

@@ -1,6 +1,7 @@
 CREATE TABLE asset (
     uuid TEXT UNIQUE ON CONFLICT ABORT NOT NULL,
-    name TEXT NOT NULL
+    name TEXT NOT NULL,
+    last_update TEXT
 );
 
 CREATE VIRTUAL TABLE asset_fts using fts5(uuid, name, content=asset, content_rowid=rowid);
@@ -19,7 +20,8 @@ CREATE TABLE tag_to_asset (
 CREATE TABLE asset_file (
     uuid TEXT UNIQUE ON CONFLICT ABORT NOT NULL,
     name TEXT NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+    last_update TEXT
 );
 
 CREATE TABLE asset_to_asset_file (
