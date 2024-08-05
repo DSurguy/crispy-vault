@@ -29,7 +29,10 @@ fn recreate_database(app: &App) -> Connection {
 
 fn clean_assets_dir(app: &App) {
     let data_dir = app.path_resolver().app_data_dir().expect("Unable to retrieve data dir");
-    remove_dir_all(data_dir.join("assets")).expect("Unable to remove assets directory");
+    let asset_path = data_dir.join("assets");
+    if fs::metadata(asset_path).is_ok() {
+        remove_dir_all(data_dir.join("assets")).expect("Unable to remove assets directory");
+    }
 }
 
 fn main() {

@@ -93,7 +93,7 @@ pub mod commands {
 
     fn _add_file_to_asset(
         app_handle: tauri::AppHandle,
-        _state: tauri::State<Mutex<DatabaseState>>,
+        state: tauri::State<Mutex<DatabaseState>>,
         asset_uuid: &str,
         name: &str,
         description: &str,
@@ -121,9 +121,28 @@ pub mod commands {
         let target_file = format!("assets/{asset_uuid}/{uuid}.{extension}");
         copy(file_path, data_dir.join(target_file))?;
 
-        // TODO: Add file to DB
+        // Add the file to the DB (and link with asset)
+        let connection = &mut state.lock().unwrap().connection;
+        let tx = connection.transaction()?;
+        tx.execute("INSERT INTO asset_file ( \
+            uuid, \
+            name, \
+            description \
+        ) VALUES ( \
+            ?1, \
+            ?2, \
+            ?3 \
+        );", [&uuid, name, description])?;
 
-        // TODO: Add entry to intersection table
+        tx.execute("INSERT INTO asset_to_asset_file ( \
+            asset_id, \
+            asset_file_id \
+        ) VALUES ( \
+            ?1, \
+            ?2 \
+        );", [asset_uuid, &uuid])?;
+
+        tx.commit()?;
 
         return Ok(AssetFile {
             uuid,

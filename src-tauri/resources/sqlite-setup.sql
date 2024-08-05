@@ -23,6 +23,6 @@ CREATE TABLE asset_file (
 );
 
 CREATE TABLE asset_to_asset_file (
-    asset_id REFERENCES asset (rowid),
-    asset_file_id REFERENCES asset_file (rowid)
+    asset_id REFERENCES asset (uuid),
+    asset_file_id REFERENCES asset_file (uuid)
 );
