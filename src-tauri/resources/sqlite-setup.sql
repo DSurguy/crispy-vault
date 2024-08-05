@@ -21,6 +21,7 @@ CREATE TABLE asset_file (
     uuid TEXT UNIQUE ON CONFLICT ABORT NOT NULL,
     name TEXT NOT NULL,
     description TEXT NOT NULL,
+    extension TEXT NOT NULL,
     last_update TEXT
 );
 

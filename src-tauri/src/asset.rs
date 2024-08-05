@@ -12,7 +12,8 @@ pub struct Asset {
 pub struct AssetFile {
     pub name: String,
     pub uuid: String,
-    pub description: String
+    pub description: String,
+    pub extension: String
 }
 
 pub mod commands {
@@ -130,13 +131,15 @@ pub mod commands {
             uuid, \
             name, \
             description, \
+            extension, \
             last_update \
         ) VALUES ( \
             ?1, \
             ?2, \
             ?3, \
+            ?4, \
             datetime('now')
-        );", [&uuid, name, description])?;
+        );", [&uuid, name, description, extension])?;
 
         tx.execute("INSERT INTO asset_to_asset_file ( \
             asset_id, \
@@ -151,7 +154,8 @@ pub mod commands {
         return Ok(AssetFile {
             uuid,
             name: name.to_string(),
-            description: description.to_string()
+            description: description.to_string(),
+            extension: extension.to_string()
         });
     }
 
@@ -178,7 +182,7 @@ pub mod commands {
         let connection = &state.lock().unwrap().connection;
         
         let mut stmt = connection.prepare("\
-            SELECT uuid, name, description \
+            SELECT uuid, name, description, extension \
             FROM asset_file \
             INNER JOIN asset_to_asset_file aaf ON asset_file.uuid = aaf.asset_file_id AND aaf.asset_id = ?1 \
             ORDER BY last_update DESC \
@@ -189,12 +193,13 @@ pub mod commands {
             let uuid: String = row.get(0)?;
             let name: String = row.get(1)?;
             let description: String = row.get(2)?;
-
+            let extension: String = row.get(3)?;
 
             Ok(AssetFile {
                 uuid,
                 name,
-                description
+                description,
+                extension
             })
         })?;
 

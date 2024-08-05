@@ -12,7 +12,7 @@ const defaultClassName = "border border-gray-200 rounded-md p-2";
 export default function FilePickerInput({ className, onChange, value }: FilePickerInputProps) {
   const mergedClassName = twMerge(defaultClassName, className);
   const wrappableValue = value?.split('/').map((part, index, parts) => {
-    return <span>{part}{index < parts.length -1 ? '/' : null}</span>
+    return <span key={index}>{part}{index < parts.length -1 ? '/' : null}</span>
   })
 
   const handleChooseClick = async () => {
