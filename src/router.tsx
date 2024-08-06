@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { createBrowserRouter, Link, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Link, Outlet, redirect } from 'react-router-dom';
 import { TbHome } from "react-icons/tb";
 import HomeRoute from './routes/home/HomeRoute';
 import AddAssetRoute from './routes/add-asset/AddAssetRoute';
@@ -20,7 +20,10 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '',
-        element: <HomeRoute />
+        element: <HomeRoute />,
+        loader: async () => {
+          return redirect("/assets");
+        }
       },
       {
         path: 'add-asset',

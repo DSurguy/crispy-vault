@@ -30,9 +30,9 @@ export default function AssetRoute() {
     setAddFileDialogActive(true);
   }
 
-  const handleAddFileDialogClose = () => {
-    // TODO: Add file to list
+  const handleAddFileComplete = (newFile: AssetFile) => {
     setAddFileDialogActive(false);
+    setFiles([newFile, ...files]);
   }
 
   return <div className="m-4">
@@ -40,8 +40,8 @@ export default function AssetRoute() {
     <div className="flex border-b border-gray-200 items-end pb-2">
       <h2 className="text-lg">Files</h2>  
       <button className="bg-gray-200 rounded-md px-2 py-1 ml-auto" onClick={handleAddFileClick}>Add File</button>
-      <AddFileDialog isOpen={addFileDialogActive} onClose={handleAddFileDialogClose}>
-        <AddFileForm assetUuid={asset.uuid} onComplete={handleAddFileDialogClose} />
+      <AddFileDialog isOpen={addFileDialogActive} onClose={() => setAddFileDialogActive(false)}>
+        <AddFileForm assetUuid={asset.uuid} onComplete={handleAddFileComplete} />
       </AddFileDialog>
     </div>
     <div>

@@ -3,10 +3,11 @@ import { invoke } from '@tauri-apps/api/core';
 import TextInput from "../../components/form/TextInput";
 import FilePickerInput from "../../components/form/FilePickerInput";
 import TextareaInput from "../../components/form/TextareaInput";
+import { AssetFile } from "../../types";
 
 type AddFileFormProps = {
   assetUuid: string;
-  onComplete: () => void;
+  onComplete: (newFile: AssetFile) => void;
 }
 
 export default function AddFileForm({ assetUuid, onComplete }: AddFileFormProps) {
@@ -18,14 +19,12 @@ export default function AddFileForm({ assetUuid, onComplete }: AddFileFormProps)
     },
     onSubmit: async ({ value: { name, description, file } }) => {
       try {
-        await invoke("add_file_to_asset", {
+        onComplete(await invoke("add_file_to_asset", {
           assetUuid,
           name,
           description,
           filePath: file
-        });
-
-        onComplete();
+        }) as AssetFile);
       } catch (e) {
         console.error(e);
       }
