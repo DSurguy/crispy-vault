@@ -1,7 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{fs::{self, remove_dir_all}, path::Path, sync::Mutex};
+use std::{
+    fs::{self, remove_dir_all},
+    path::Path,
+    sync::Mutex,
+};
 
 use rusqlite::Connection;
 use tauri::{App, Manager};
@@ -11,7 +15,10 @@ pub mod database;
 pub mod invoke;
 
 fn recreate_database(app: &App) -> Connection {
-    let data_dir = app.path_resolver().app_data_dir().expect("Unable to retrieve data dir");
+    let data_dir = app
+        .path()
+        .app_data_dir()
+        .expect("Unable to retrieve data dir");
     let db_path = data_dir.join("test-database.db");
     let resolved_db_path = Path::new(&db_path);
     let db_exists = resolved_db_path.exists();
@@ -20,15 +27,26 @@ fn recreate_database(app: &App) -> Connection {
         // TODO: May need to wait for file to not exist in case of async removal
     }
     let db_connection = Connection::open(&db_path).expect("Unable to get database connection");
-    let db_source_path = app.path_resolver().resolve_resource("resources/sqlite-setup.sql").expect("Unable to find db source file");
-    let contents = fs::read_to_string(&db_source_path)
-        .expect("Should have been able to read the file");
-    db_connection.execute_batch(&contents).expect("Unable to bootstrap database");
+    let db_source_path = app
+        .path()
+        .resolve(
+            "resources/sqlite-setup.sql",
+            tauri::path::BaseDirectory::Resource
+        )
+        .expect("Unable to find db source file");
+    let contents =
+        fs::read_to_string(&db_source_path).expect("Should have been able to read the file");
+    db_connection
+        .execute_batch(&contents)
+        .expect("Unable to bootstrap database");
     return db_connection;
 }
 
 fn clean_assets_dir(app: &App) {
-    let data_dir = app.path_resolver().app_data_dir().expect("Unable to retrieve data dir");
+    let data_dir = app
+        .path()
+        .app_data_dir()
+        .expect("Unable to retrieve data dir");
     let asset_path = data_dir.join("assets");
     if fs::metadata(asset_path).is_ok() {
         remove_dir_all(data_dir.join("assets")).expect("Unable to remove assets directory");
@@ -37,6 +55,9 @@ fn clean_assets_dir(app: &App) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             clean_assets_dir(app);
             let db_connection = recreate_database(app);

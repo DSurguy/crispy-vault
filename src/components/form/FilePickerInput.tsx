@@ -1,4 +1,4 @@
-import { open } from "@tauri-apps/api/dialog";
+import { open } from "@tauri-apps/plugin-dialog";
 import { twMerge } from "tailwind-merge";
 
 type FilePickerInputProps = {
@@ -19,10 +19,10 @@ export default function FilePickerInput({ className, onChange, value }: FilePick
     try {
       const selected = await open({
         multiple: false,
-      }) as string;
+      });
 
       if ( selected ) {
-        onChange(selected);
+        onChange(selected.path);
       } else {
         onChange(null);
       }

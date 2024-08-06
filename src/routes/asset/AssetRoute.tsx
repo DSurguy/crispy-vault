@@ -1,7 +1,7 @@
-import { useLoaderData } from "react-router-dom"
-import { invoke } from "@tauri-apps/api";
-import { Asset, AssetFile } from "../../types";
 import { useEffect, useState } from "react";
+import { useLoaderData } from "react-router-dom"
+import { invoke } from '@tauri-apps/api/core';
+import { Asset, AssetFile } from "../../types";
 import AddFileDialog from "./AddFileDialog";
 import AddFileForm from "./AddFileForm";
 import { AssetFileListItem } from "./AssetFileListItem";
@@ -47,7 +47,7 @@ export default function AssetRoute() {
     <div>
       { loadFileError && <div className="text-red-800">Error loading files</div>}
       {files && <div>
-        {files.map(file => <AssetFileListItem asset={asset} file={file} />)}
+        {files.map(file => <AssetFileListItem key={file.uuid} asset={asset} file={file} />)}
       </div>}
     </div>
   </div>

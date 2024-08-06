@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api';
+import { invoke } from '@tauri-apps/api/core';
 import { createBrowserRouter, Link, Outlet } from 'react-router-dom';
 import { TbHome } from "react-icons/tb";
 import HomeRoute from './routes/home/HomeRoute';

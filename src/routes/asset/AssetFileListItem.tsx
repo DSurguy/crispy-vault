@@ -1,7 +1,8 @@
-import { open } from "@tauri-apps/api/dialog";
+import { save } from "@tauri-apps/plugin-dialog";
+import { copyFile } from "@tauri-apps/plugin-fs";
 import { TbDownload, TbPencil } from "react-icons/tb";
 import { Asset, AssetFile } from "../../types";
-// import { copyFile } from "@tauri-apps/api/fs";
+import { BaseDirectory, downloadDir } from "@tauri-apps/api/path";
 
 type AssetFileListItemProps = {
   asset: Asset;
@@ -14,13 +15,13 @@ const toKebabCase = (source: string) => source.toLowerCase().replace(/\s+/g, '-'
 export function AssetFileListItem({ asset, file }: AssetFileListItemProps) {
   const handleDownloadFileClick = async () => {
     const filename = `${toKebabCase(asset.name).substring(0,12)}_${toKebabCase(file.name).substring(0,12)}.${file.extension}`;
-    const path = await open({
-      directory: true,
-      title: `Download ${filename}`
+    const path = await save({
+      defaultPath: await downloadDir() + `/${filename}`
     });
-    console.log(`${path}/${filename}`);
-    // TODO: Handle overwrite
-    // await copyFile(`$APPDATA/assets/${asset.uuid}/${file.uuid}.${file.extension}`, `${path}/${filename}`);
+    if( !path ) return;
+    await copyFile(`assets/${asset.uuid}/${file.uuid}.${file.extension}`, path, {
+      fromPathBaseDir: BaseDirectory.AppLocalData
+    });
   }
 
   return <div key={file.uuid} className="flex border-b border-gray-200 p-1 items-center">

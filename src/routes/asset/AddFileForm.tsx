@@ -1,9 +1,8 @@
 import { useForm } from "@tanstack/react-form"
-// import { invoke } from "@tauri-apps/api";
+import { invoke } from '@tauri-apps/api/core';
 import TextInput from "../../components/form/TextInput";
 import FilePickerInput from "../../components/form/FilePickerInput";
 import TextareaInput from "../../components/form/TextareaInput";
-import { invoke } from "@tauri-apps/api";
 
 type AddFileFormProps = {
   assetUuid: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { invoke } from "@tauri-apps/api";
+import { invoke } from '@tauri-apps/api/core';
 
 export default function ListAssetsRoute() {
   const [assets, setAssets] = useState<{ uuid: string, name: string }[]>([]);

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { invoke } from '@tauri-apps/api/core';
 import { useCleanSearchParams } from "../../utils/route";
 import { homeSearchSchema } from "./route";
-import { invoke } from "@tauri-apps/api";
 
 export default function HomeRoute() {
   const [{ searchParams, searchError }] = useCleanSearchParams(homeSearchSchema);

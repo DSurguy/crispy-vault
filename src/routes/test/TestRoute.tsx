@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { open } from '@tauri-apps/api/dialog';
-import { open as shellOpen } from '@tauri-apps/api/shell';
-import { copyFile } from '@tauri-apps/api/fs';
+import { open } from '@tauri-apps/plugin-dialog';
+import { open as shellOpen } from '@tauri-apps/plugin-shell';
+import { copyFile } from '@tauri-apps/plugin-fs';
 import { appDataDir } from '@tauri-apps/api/path';
 
 export default function TestRoute() {
