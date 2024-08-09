@@ -8,14 +8,16 @@ import { extensionToColor } from "../../utils/stringToColor";
 type AssetFileListItemProps = {
   asset: Asset;
   file: AssetFile;
+  onEditClick: () => void;
 }
 
 // const toSnakeCase = (source: string) => source.toLowerCase().replace(/\s+/g, '_')
 const toKebabCase = (source: string) => source.toLowerCase().replace(/\s+/g, '-')
 
-export function AssetFileListItem({ asset, file }: AssetFileListItemProps) {
+export function AssetFileListItem({ asset, file, onEditClick }: AssetFileListItemProps) {
   const extensionBgColor = extensionToColor(file.extension, 100, 85)
   const extensionColor = extensionToColor(file.extension, 80, 15)
+
   const handleDownloadFileClick = async () => {
     const filename = `${toKebabCase(asset.name).substring(0,12)}_${toKebabCase(file.name).substring(0,12)}.${file.extension}`;
     const path = await save({
@@ -34,7 +36,7 @@ export function AssetFileListItem({ asset, file }: AssetFileListItemProps) {
     </div>
     <div className="ml-auto items-center h-full">
       <button className="mx-2" onClick={handleDownloadFileClick}><TbDownload /></button>
-      <button className="mx-2"><TbPencil /></button>  
+      <button className="mx-2" onClick={onEditClick}><TbPencil /></button>  
     </div>
   </div>
 }

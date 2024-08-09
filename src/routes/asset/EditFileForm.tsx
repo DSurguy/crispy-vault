@@ -4,37 +4,64 @@ import TextInput from "../../components/form/TextInput";
 import FilePickerInput from "../../components/form/FilePickerInput";
 import TextareaInput from "../../components/form/TextareaInput";
 import { AssetFile } from "../../types";
+import { confirm } from "@tauri-apps/plugin-dialog";
 
-type AddFileFormProps = {
+type EditFileFormProps = {
   assetUuid: string;
+  file?: AssetFile | null;
   onComplete: (newFile: AssetFile) => void;
 }
 
-export default function AddFileForm({ assetUuid, onComplete }: AddFileFormProps) {
+export default function EditFileForm({ assetUuid, file, onComplete }: EditFileFormProps) {
   const form = useForm({
     defaultValues: {
-      name: '',
-      description: '',
-      file: null as string | null,
+      name: file ? file.name : '',
+      description: file ? file.description : '',
+      filePath: null as string | null,
     },
-    onSubmit: async ({ value: { name, description, file } }) => {
-      try {
-        onComplete(await invoke("add_file_to_asset", {
-          assetUuid,
-          name,
-          description,
-          filePath: file
-        }) as AssetFile);
-      } catch (e) {
-        console.error(e);
+    onSubmit: async ({ value: { name, description, filePath } }) => {
+      if (file) {
+        if (filePath) {
+          // If we are uploading a new file, we need the user to confirm.
+          if (await confirm(
+            `Are you sure you want to replace the existing file with the file at ${filePath}?`,
+            "Replace File?"
+          ) === false) {
+            return;
+          }
+        }
+
+        try {
+          onComplete(await invoke("edit_asset_file", {
+            assetUuid,
+            fileUuid: file.uuid,
+            name,
+            description,
+            filePath
+          }) as AssetFile);
+        } catch (e) {
+          console.error(e);
+        }
       }
-    },
+      else {
+        try {
+          onComplete(await invoke("add_file_to_asset", {
+            assetUuid,
+            name,
+            description,
+            filePath
+          }) as AssetFile);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
   })
   return <div>
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        e.stopPropagation();  
+        e.stopPropagation();
         form.handleSubmit();
       }}
     >
@@ -53,7 +80,7 @@ export default function AddFileForm({ assetUuid, onComplete }: AddFileFormProps)
           ) : null}
         </div>)}
         validators={{
-          onChange: ({value}) =>
+          onChange: ({ value }) =>
             value.length < 1 ? 'Please enter a name for this file' : undefined,
         }}
       />
@@ -76,12 +103,12 @@ export default function AddFileForm({ assetUuid, onComplete }: AddFileFormProps)
         </div>)}
       />
       <form.Field
-        name="file"
+        name="filePath"
         children={field => (<div className="mb-4">
-          <label className="block" htmlFor={field.name}>File</label>
+          <label className="block" htmlFor={field.name}>{file ? "Replace File" : "Upload File"}</label>
           <div className="flex">
             <FilePickerInput
-              onChange={(file) => field.handleChange(file)}
+              onChange={selectedFilePath => field.handleChange(selectedFilePath)}
               value={field.state.value}
             />
           </div>
@@ -90,7 +117,7 @@ export default function AddFileForm({ assetUuid, onComplete }: AddFileFormProps)
           ) : null}
         </div>)}
         validators={{
-          onChange: ({value}) =>
+          onChange: ({ value }) =>
             !value ? 'Please select a file' : undefined,
         }}
       />

@@ -110,7 +110,6 @@ pub mod commands {
     ) -> anyhow::Result<AssetFile> {
         let uuid = Uuid::new_v4().to_string();
 
-        // TODO: copy file from path into vault
         let data_dir = app_handle.path().app_data_dir()?;
 
         // Create asset dir if not exists
@@ -235,6 +234,80 @@ pub mod commands {
         page: u32,
     ) -> anyhow_tauri::TAResult<Vec<AssetFile>> {
         let out = _list_asset_files(state, asset_uuid, page)?;
+        return Ok(out);
+    }
+
+    fn _edit_asset_file(
+        app_handle: tauri::AppHandle,
+        state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        file_uuid: &str,
+        name: &str,
+        description: &str,
+        file_path: Option<&str>,
+    ) -> anyhow::Result<AssetFile> {
+        let connection = &mut state.lock().unwrap().connection;
+        let tx = connection.transaction()?;
+        let mut raw_statement = String::from("UPDATE asset_file SET \
+            name = ?1, \
+            description = ?2, \
+            last_update = datetime('now')");
+        
+        if file_path.is_some() {
+            let some_file_path = file_path.unwrap();
+            let data_dir = app_handle.path().app_data_dir()?;
+
+            // Get extension from file_path
+            let extension = Path::new(some_file_path)
+                .extension()
+                .ok_or(anyhow::anyhow!("Unable to get extension"))?
+                .to_str()
+                .ok_or(anyhow::anyhow!("Unable to convert extension to string"))?;
+
+            // Copy the file to uuid.<ext>
+            let target_file = format!("assets/{asset_uuid}/{file_uuid}.{extension}");
+            copy(some_file_path, data_dir.join(target_file))?;
+
+            raw_statement.push_str(", extension = ?3 WHERE uuid = ?4");
+            tx.execute(raw_statement.as_str(), [name, description, extension, file_uuid])?;
+            tx.commit()?;
+        }
+        else {
+            raw_statement.push_str(" WHERE uuid = ?3");
+            tx.execute(raw_statement.as_str(), [name, description, file_uuid])?;
+            tx.commit()?;
+        }
+
+        let mut stmt = connection.prepare("SELECT name, description, extension FROM asset_file WHERE uuid = ?1")?;
+        let mut rows = stmt.query_map([file_uuid], |row| {
+            let name: String = row.get::<usize, String>(1)?;
+            let description: String = row.get::<usize, String>(2)?;
+            let extension: String = row.get::<usize, String>(2)?;
+
+            Ok(AssetFile {
+                uuid: file_uuid.to_owned(),
+                name,
+                description,
+                extension
+            })
+        })?;
+
+        let file = rows.next().unwrap()?;
+
+        return Ok(file);
+    }
+
+    #[tauri::command]
+    pub fn edit_asset_file(
+        app_handle: tauri::AppHandle,
+        state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        file_uuid: &str,
+        name: &str,
+        description: &str,
+        file_path: Option<&str>,
+    ) -> anyhow_tauri::TAResult<AssetFile> {
+        let out = _edit_asset_file(app_handle, state, asset_uuid, file_uuid, name, description, file_path)?;
         return Ok(out);
     }
 }
