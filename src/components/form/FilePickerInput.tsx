@@ -34,6 +34,6 @@ export default function FilePickerInput({ className, onChange, value }: FilePick
 
   return <div className={mergedClassName}>
     { wrappableValue && <div className="m-2 font-mono flex flex-wrap">{wrappableValue}</div> }
-    <button className="bg-gray-200 px-2 py-1 rounded-md" onClick={handleChooseClick}>Choose File</button>
+    <button type="button" aria-label="Choose File" className="bg-gray-200 px-2 py-1 rounded-md" onClick={handleChooseClick}>Choose File</button>
   </div>
 }
