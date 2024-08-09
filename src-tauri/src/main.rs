@@ -65,13 +65,13 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            asset::commands::create_asset,
-            asset::commands::get_asset,
-            asset::commands::list_assets,
-            asset::commands::add_file_to_asset,
-            asset::commands::list_asset_files,
-            asset::commands::edit_asset_file,
-            asset::commands::delete_asset_file
+            asset::commands::create_asset::create_asset,
+            asset::commands::get_asset::get_asset,
+            asset::commands::list_assets::list_assets,
+            asset::commands::add_file_to_asset::add_file_to_asset,
+            asset::commands::list_asset_files::list_asset_files,
+            asset::commands::edit_asset_file::edit_asset_file,
+            asset::commands::delete_asset_file::delete_asset_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
