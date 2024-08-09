@@ -19,11 +19,35 @@ pub mod commands {
     use crate::database::DatabaseState;
     use anyhow;
     use anyhow_tauri;
-    use std::fs::{copy, create_dir_all, metadata};
+    use rusqlite::Connection;
+    use std::fs::{copy, create_dir_all, metadata, remove_file};
     use std::path::Path;
     use std::sync::Mutex;
     use tauri::Manager;
     use uuid::Uuid;
+
+    fn get_file_asset_from_db(
+        connection: &Connection,
+        file_uuid: &str
+    ) -> anyhow::Result<AssetFile> {
+        let mut stmt = connection.prepare("SELECT name, description, extension FROM asset_file WHERE uuid = ?1")?;
+        let mut rows = stmt.query_map([file_uuid], |row| {
+            let name: String = row.get::<usize, String>(1)?;
+            let description: String = row.get::<usize, String>(2)?;
+            let extension: String = row.get::<usize, String>(2)?;
+
+            Ok(AssetFile {
+                uuid: file_uuid.to_owned(),
+                name,
+                description,
+                extension
+            })
+        })?;
+
+        let file = rows.next().unwrap()?;
+
+        return Ok(file);
+    }
 
     fn _create_asset(
         state: tauri::State<Mutex<DatabaseState>>,
@@ -246,18 +270,22 @@ pub mod commands {
         description: &str,
         file_path: Option<&str>,
     ) -> anyhow::Result<AssetFile> {
-        let connection = &mut state.lock().unwrap().connection;
-        let tx = connection.transaction()?;
+        let connection = &state.lock().unwrap().connection;
         let mut raw_statement = String::from("UPDATE asset_file SET \
             name = ?1, \
             description = ?2, \
             last_update = datetime('now')");
         
         if file_path.is_some() {
-            let some_file_path = file_path.unwrap();
+            // Remove existing file before copy
+            let existing_file = get_file_asset_from_db(connection, file_uuid)?;
+            let existing_file_extension = existing_file.extension;
             let data_dir = app_handle.path().app_data_dir()?;
+            let file_to_remove = format!("assets/{asset_uuid}/{file_uuid}.{existing_file_extension}");
+            remove_file(file_to_remove)?;
 
             // Get extension from file_path
+            let some_file_path = file_path.unwrap();
             let extension = Path::new(some_file_path)
                 .extension()
                 .ok_or(anyhow::anyhow!("Unable to get extension"))?
@@ -269,13 +297,11 @@ pub mod commands {
             copy(some_file_path, data_dir.join(target_file))?;
 
             raw_statement.push_str(", extension = ?3 WHERE uuid = ?4");
-            tx.execute(raw_statement.as_str(), [name, description, extension, file_uuid])?;
-            tx.commit()?;
+            connection.execute(raw_statement.as_str(), [name, description, extension, file_uuid])?;
         }
         else {
             raw_statement.push_str(" WHERE uuid = ?3");
-            tx.execute(raw_statement.as_str(), [name, description, file_uuid])?;
-            tx.commit()?;
+            connection.execute(raw_statement.as_str(), [name, description, file_uuid])?;
         }
 
         let mut stmt = connection.prepare("SELECT name, description, extension FROM asset_file WHERE uuid = ?1")?;
@@ -309,5 +335,40 @@ pub mod commands {
     ) -> anyhow_tauri::TAResult<AssetFile> {
         let out = _edit_asset_file(app_handle, state, asset_uuid, file_uuid, name, description, file_path)?;
         return Ok(out);
+    }
+
+    fn _delete_asset_file(
+        app_handle: tauri::AppHandle,
+        state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        file_uuid: &str,
+    ) -> anyhow::Result<()> {
+        let connection = &state.lock().unwrap().connection;
+
+        // get extension from DB before delete
+        let existing_file = get_file_asset_from_db(connection, file_uuid)?;
+        let file_extension = existing_file.extension;
+        let data_dir = app_handle.path().app_data_dir()?;
+        let file_to_remove = format!("assets/{asset_uuid}/{file_uuid}.{file_extension}");
+
+        connection.execute(
+            "DELETE FROM asset_file WHERE uuid = ?1",
+            [file_uuid],
+        )?;
+
+        remove_file(data_dir.join(file_to_remove))?;
+
+        return Ok(())
+    }
+
+    #[tauri::command]
+    pub fn delete_asset_file(
+        app_handle: tauri::AppHandle,
+        state: tauri::State<Mutex<DatabaseState>>,
+        asset_uuid: &str,
+        file_uuid: &str,
+    ) -> anyhow_tauri::TAResult<()> {
+        let out = _delete_asset_file(app_handle, state, asset_uuid, file_uuid)?;
+        return Ok(out)
     }
 }

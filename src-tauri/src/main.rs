@@ -71,6 +71,7 @@ fn main() {
             asset::commands::add_file_to_asset,
             asset::commands::list_asset_files,
             asset::commands::edit_asset_file,
+            asset::commands::delete_asset_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
