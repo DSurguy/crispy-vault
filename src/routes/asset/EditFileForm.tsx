@@ -10,9 +10,10 @@ type EditFileFormProps = {
   assetUuid: string;
   file?: AssetFile | null;
   onComplete: (newFile: AssetFile) => void;
+  onDelete: (fileUuid: string) => void;
 }
 
-export default function EditFileForm({ assetUuid, file, onComplete }: EditFileFormProps) {
+export default function EditFileForm({ assetUuid, file, onComplete, onDelete }: EditFileFormProps) {
   const form = useForm({
     defaultValues: {
       name: file ? file.name : '',
@@ -57,6 +58,26 @@ export default function EditFileForm({ assetUuid, file, onComplete }: EditFileFo
       }
     }
   })
+
+  const handleDeleteClick = async () => {
+    if( !file ) return;
+    try {
+      if (await confirm(
+        `Are you sure you want to delete the file ${file.name}?`,
+        "Delete File?"
+      ) === false) {
+        return;
+      }
+      await invoke("delete_asset_file", {
+        assetUuid,
+        fileUuid: file.uuid
+      })
+      onDelete(file.uuid)
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   return <div>
     <form
       onSubmit={(e) => {
@@ -118,11 +139,12 @@ export default function EditFileForm({ assetUuid, file, onComplete }: EditFileFo
         </div>)}
         validators={{
           onChange: ({ value }) =>
-            !value ? 'Please select a file' : undefined,
+            !value && !file ? 'Please select a file' : undefined,
         }}
       />
-      <div className="mt-4">
+      <div className="mt-4 flex justify-between">
         <button className="bg-gray-200 px-4 py-2 rounded-sm" type="submit">Submit</button>
+        { file && <button className="bg-red-200 text-red-800 px-4 py-2 rounded-sm" type="button" onClick={handleDeleteClick}>Delete File</button> }
       </div>
     </form>
   </div>

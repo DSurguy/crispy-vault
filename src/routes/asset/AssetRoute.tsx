@@ -44,13 +44,19 @@ export default function AssetRoute() {
     setEditFileDialogActive(true);
   }
 
+  const handleFileDelete = (fileUuid: string) => {
+    const newFiles = files.filter(file => file.uuid != fileUuid);
+    setEditFileDialogActive(false);
+    setFiles(newFiles);
+  }
+
   return <div className="m-4">
     <h1 className="text-xl font-bold mb-4">{ asset.name }</h1>
     <div className="flex border-b border-gray-200 items-end pb-2">
       <h2 className="text-lg">Files</h2>  
       <button className="bg-gray-200 rounded-md px-2 py-1 ml-auto" onClick={handleAddFileClick}>Add File</button>
       <EditFileDialog file={fileToEdit} isOpen={editFileDialogActive} onClose={() => setEditFileDialogActive(false)}>
-        <EditFileForm file={fileToEdit} assetUuid={asset.uuid} onComplete={handleEditFileComplete} />
+        <EditFileForm file={fileToEdit} assetUuid={asset.uuid} onComplete={handleEditFileComplete} onDelete={handleFileDelete} />
       </EditFileDialog>
     </div>
     <div>
