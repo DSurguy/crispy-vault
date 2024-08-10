@@ -1,5 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import { TbMenu2 } from "react-icons/tb";
+import OmniSearch from "../../components/OmniSearch";
 
 type AppBarProps = {
   className?: string;
@@ -19,8 +20,7 @@ export default function AppBar({ className, basis = "basis-12" }: AppBarProps) {
       </button>
     </div>
     <div className="flex grow h-full items-center">
-      {/* TODO: design search component */}
-      <input className="grow mr-4 rounded-md bg-gray-100 p-1 border border-gray-400" type="search" placeholder="Search for assets and samples by name or tag" />
+      <OmniSearch className="grow mr-4" />
     </div>
   </div>
 }
