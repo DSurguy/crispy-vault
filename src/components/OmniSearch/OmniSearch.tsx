@@ -58,7 +58,8 @@ export default function OmniSearch({ className }: OmniSearchProps) {
   const editableRef = useRef<null | HTMLDivElement>(null);
   const [currentInput, setCurrentInput] = useState("");
   const debouncedInput = useDebounce(currentInput, 150);
-  const [tagSearchResults, setTagSearchResults] = useState<string[]>([]);
+  const [tagSearchResults, setTagSearchResults] = useState<{text: string, selected: boolean}[]>([]);
+  const currentlySelectedIndex = tagSearchResults.findIndex(v => v.selected);
 
   const mergedOuterClassName = twMerge(
     outerClassName,
@@ -72,25 +73,33 @@ export default function OmniSearch({ className }: OmniSearchProps) {
       if (debouncedInput) {
         // TODO: parse to see if we have a command
 
-        if (debouncedInput.startsWith("tag:")) {
+        if (/^(t|tag):/.test(debouncedInput)) {
           // TODO: Search tags for given text
           const results = fuzzysort.go<{ text: string }>(debouncedInput.split(':')[1], await mockTagsApi(), {
             key: "text",
             threshold: 0.75,
             limit: 20
-          }).map(v => v.obj.text)
+          }).map(v => ({
+            text: v.obj.text,
+            selected: false
+          }))
           setTagSearchResults(results);
         } else {
           setTagSearchResults([]);
         }
       } else {
-        // TODO: Handle input clear
+        if( tagSearchResults ) setTagSearchResults([]);
       }
     })()
   }, [debouncedInput])
 
   const handleContentEditableInput: React.FormEventHandler<HTMLDivElement> = (e) => {
-    const text = (e.target as HTMLDivElement).innerText;
+    let text = (e.target as HTMLDivElement).innerText;
+    if( (!text.length || /^\s+$/.test(text)) && editableRef.current ) {
+      // sometimes whitespace appears, explicitly get rid of it
+      editableRef.current.innerHTML = "";
+      text = "";
+    }
     setCurrentInput(text);
   }
 
@@ -99,7 +108,6 @@ export default function OmniSearch({ className }: OmniSearchProps) {
   }
 
   const handleEditableBlur = () => {
-    // TODO: don't blur parent if a tag is now focused
     setHasFocus(false);
   }
 
@@ -119,20 +127,25 @@ export default function OmniSearch({ className }: OmniSearchProps) {
     }
   }
 
+  const confirmTag = (tag: { text: string }) => {
+    setTags([...tags, tag.text])
+    if (editableRef.current) editableRef.current.innerHTML = "";
+    setCurrentInput("");
+    setTagSearchResults([]);
+  }
+
   const handleEditableKeydown: React.KeyboardEventHandler<HTMLDivElement> = e => {
     if (!editableRef.current) return;
+    
     if (e.key === "Enter") {
       e.stopPropagation();
       e.preventDefault();
 
-      if (/^(t|tag):/.test(currentInput)) {
-        const tag = currentInput.split(":")[1]
-        if (!tag.length) return;
-        setTags([...tags, tag])
-        editableRef.current.innerHTML = "";
-        setCurrentInput("");
+      if( currentlySelectedIndex > -1 ){
+        confirmTag(tagSearchResults[currentlySelectedIndex])
       }
     }
+
     if (e.key === "Backspace") {
       const selection = window.getSelection();
       if (!selection) return;
@@ -143,9 +156,37 @@ export default function OmniSearch({ className }: OmniSearchProps) {
         if (tags.length) setTags(tags.slice(0, -1))
       }
     }
+
     if (e.key === "ArrowDown" ) {
-      console.log("down")
+      e.stopPropagation();
+      e.preventDefault();
+      if( currentlySelectedIndex >= -1 && currentlySelectedIndex < tagSearchResults.length -1){
+        const newTagSearchResults = tagSearchResults.map(v => ({...v}))
+        if( newTagSearchResults[currentlySelectedIndex] ) newTagSearchResults[currentlySelectedIndex].selected = false;
+        newTagSearchResults[currentlySelectedIndex+1].selected = true;
+        setTagSearchResults(newTagSearchResults);
+      }
     }
+
+    if (e.key === "ArrowUp" ) {
+      e.stopPropagation();
+      e.preventDefault();
+      if( currentlySelectedIndex > 0){
+        const newTagSearchResults = tagSearchResults.map(v => ({...v}))
+        newTagSearchResults[currentlySelectedIndex].selected = false;
+        newTagSearchResults[currentlySelectedIndex-1].selected = true;
+        setTagSearchResults(newTagSearchResults);
+      }
+    }
+
+    if (e.key === "Escape" ) {
+      if( tagSearchResults.length )
+        setTagSearchResults([])
+    }
+  }
+
+  const handleTagClick = (tag: { text: string }) => {
+    confirmTag(tag);
   }
 
   return <div className={mergedOuterClassName}>
@@ -162,11 +203,16 @@ export default function OmniSearch({ className }: OmniSearchProps) {
         onKeyDown={handleEditableKeydown}
       ></div>
       {!!tagSearchResults.length && <div className="absolute top-full mt-1 ml-2 bg-gray-50 drop-shadow-md w-11/12">{
-        tagSearchResults.map(tag => <button
-          type="button"
-          className="flex justify-start box-border p-1 w-full hover:bg-blue-100"
-          key={tag}
-        >{tag}</button>)
+        tagSearchResults.map(tag => {
+          const tagClassName = twMerge("flex justify-start box-border p-1 w-full hover:bg-blue-100", tag.selected ? 'bg-blue-100' : '')
+          return <button
+            type="button"
+            className={tagClassName}
+            tabIndex={-1}
+            key={tag.text}
+            onClick={() => handleTagClick(tag)}
+          >{tag.text}</button>
+        })
       }</div>}
     </div>
   </div>
