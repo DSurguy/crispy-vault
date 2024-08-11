@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import { TbMenu2 } from "react-icons/tb";
-import OmniSearch from "../../components/OmniSearch";
+import OmniSearch from "../../components/OmniSearch/OmniSearch";
 
 type AppBarProps = {
   className?: string;
