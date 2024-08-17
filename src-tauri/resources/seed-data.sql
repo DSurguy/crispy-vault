@@ -1,5 +1,3 @@
-BEGIN TRANSACTION;
-
 INSERT INTO tag (text) VALUES ('test'), ('second test'), ('banana'), ('second banana'), ('orange');
 
 INSERT INTO asset (uuid, name, last_update) VALUES (
@@ -53,5 +51,3 @@ INSERT INTO tag_to_asset (asset_id, tag_id) VALUES (
     (SELECT rowid FROM asset WHERE uuid = 'e1adecf5-2e94-4364-a10b-90e38fd6334a'),
     (SELECT rowid FROM tag WHERE text = 'orange')
 );
-
-COMMIT TRANSACTION;

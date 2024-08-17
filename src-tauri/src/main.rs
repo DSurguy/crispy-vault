@@ -11,8 +11,21 @@ use rusqlite::Connection;
 use tauri::{App, Manager};
 
 pub mod asset;
+pub mod tag;
 pub mod database;
 pub mod invoke;
+
+fn seed_database(app: &App, connection: &Connection) -> Result<(), anyhow::Error> {
+    let db_source_path = app
+        .path()
+        .resolve(
+            "resources/seed-data.sql",
+            tauri::path::BaseDirectory::Resource
+        )?;
+    let contents = fs::read_to_string(&db_source_path)?;
+    connection.execute_batch(&contents)?;
+    return Ok(())
+}
 
 fn recreate_database(app: &App) -> Connection {
     let data_dir = app
@@ -39,6 +52,9 @@ fn recreate_database(app: &App) -> Connection {
     db_connection
         .execute_batch(&contents)
         .expect("Unable to bootstrap database");
+
+    // seed_database(app, &db_connection).expect("Unable to load seed data into database");
+    
     return db_connection;
 }
 
@@ -71,7 +87,8 @@ fn main() {
             asset::commands::add_file_to_asset::add_file_to_asset,
             asset::commands::list_asset_files::list_asset_files,
             asset::commands::edit_asset_file::edit_asset_file,
-            asset::commands::delete_asset_file::delete_asset_file
+            asset::commands::delete_asset_file::delete_asset_file,
+            tag::commands::tag_search::tag_search
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

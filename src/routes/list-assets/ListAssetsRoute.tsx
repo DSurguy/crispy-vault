@@ -12,6 +12,7 @@ export default function ListAssetsRoute() {
         setAssets(await invoke("list_assets"))
         setError(null);
       } catch (e) {
+        console.error(e);
         if( e instanceof Error )
           setError(e.message);
         else setError("Unknown error")

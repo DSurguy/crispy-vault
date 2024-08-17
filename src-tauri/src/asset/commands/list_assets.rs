@@ -4,11 +4,11 @@ use anyhow;
 use anyhow_tauri;
 use std::sync::Mutex;
 
+// TODO: sort
 fn _list_assets(state: tauri::State<Mutex<DatabaseState>>) -> anyhow::Result<Vec<Asset>> {
     let connection = &state.lock().unwrap().connection;
     let mut stmt = connection
-        .prepare("SELECT rowid, name, uuid FROM asset LIMIT 20")
-        .expect("Unable to prepare list_assets SELECT");
+        .prepare("SELECT rowid, name, uuid FROM asset ORDER BY last_update DESC LIMIT 20")?;
     let rows = stmt.query_map((), |row| {
         let name: String = row.get::<usize, String>(1)?;
         let uuid: String = row.get::<usize, String>(2)?;

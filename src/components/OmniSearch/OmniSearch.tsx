@@ -1,22 +1,31 @@
+import { invoke } from "@tauri-apps/api/core";
 import { useDebounce } from "@uidotdev/usehooks";
 import fuzzysort from "fuzzysort";
 import { useEffect, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
-const mockTags = [
-  "test",
-  "second test",
-  "secondish test",
-  "banana",
-  "bigBanana"
-].map(v => ({ text: v }))
+async function mockTagsApi(search: string) {
+  const mockTags = [
+    "test",
+    "second test",
+    "secondish test",
+    "banana",
+    "bigBanana"
+  ].map(v => ({ text: v }))
 
-async function mockTagsApi() {
-  return new Promise<{ text: string }[]>(resolve => {
+  const mockApiCall = () => new Promise<{ text: string }[]>(resolve => {
     setTimeout(() => {
       resolve(mockTags);
     }, 500)
   })
+
+  const results = fuzzysort.go<{ text: string }>(search.split(':')[1], await mockApiCall(), {
+    key: "text",
+    threshold: 0.75,
+    limit: 20
+  })
+
+  return results;
 }
 
 const defaultTagClassName = "px-1 bg-blue-200 rounded-sm text-blue-700 font-bold";
@@ -73,17 +82,22 @@ export default function OmniSearch({ className }: OmniSearchProps) {
       if (debouncedInput) {
         // TODO: parse to see if we have a command
 
-        if (/^(t|tag):/.test(debouncedInput)) {
-          // TODO: Search tags for given text
-          const results = fuzzysort.go<{ text: string }>(debouncedInput.split(':')[1], await mockTagsApi(), {
-            key: "text",
-            threshold: 0.75,
-            limit: 20
-          }).map(v => ({
-            text: v.obj.text,
-            selected: false
-          }))
-          setTagSearchResults(results);
+        if (/^(t|tag):(.+){3}/.test(debouncedInput)) {
+          console.log("wtf")
+          try {
+            const results = await invoke<string[]>('tag_search', {
+              search: debouncedInput.split(/:/g)[1]
+            });
+            setTagSearchResults(
+              results.map(tag => ({
+                text: tag,
+                selected: false
+              }))
+            );
+          } catch (e) {
+            setTagSearchResults([]);
+            console.error(e);
+          }
         } else {
           setTagSearchResults([]);
         }
