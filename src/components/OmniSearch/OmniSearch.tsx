@@ -83,13 +83,15 @@ export default function OmniSearch({ className }: OmniSearchProps) {
         // TODO: parse to see if we have a command
 
         if (/^(t|tag):(.+){3}/.test(debouncedInput)) {
-          console.log("wtf")
           try {
             const results = await invoke<string[]>('tag_search', {
-              search: debouncedInput.split(/:/g)[1]
+              search: debouncedInput.split(/:/g)[1],
+              existingTags: tags,
             });
             setTagSearchResults(
-              results.map(tag => ({
+              results.filter(tag => {
+                return !tags.includes(tag);
+              }).map(tag => ({
                 text: tag,
                 selected: false
               }))

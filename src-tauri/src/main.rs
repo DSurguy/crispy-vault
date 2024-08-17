@@ -15,10 +15,7 @@ pub mod tag;
 pub mod database;
 pub mod invoke;
 
-fn seed_database(app: &App, connection: &mut Connection) -> Result<(), anyhow::Error> {
-    connection.trace(Some(|data| {
-        println!("{data}");
-    }));
+fn seed_database(app: &App, db_connection: &mut Connection) -> Result<(), anyhow::Error> {
     let db_source_path = app
         .path()
         .resolve(
@@ -26,7 +23,7 @@ fn seed_database(app: &App, connection: &mut Connection) -> Result<(), anyhow::E
             tauri::path::BaseDirectory::Resource
         )?;
     let contents = fs::read_to_string(&db_source_path)?;
-    connection.execute_batch(&contents)?;
+    db_connection.execute_batch(&contents)?;
     return Ok(())
 }
 
@@ -43,6 +40,10 @@ fn recreate_database(app: &App) -> Connection {
         // TODO: May need to wait for file to not exist in case of async removal
     }
     let mut db_connection = Connection::open(&db_path).expect("Unable to get database connection");
+    db_connection.trace(Some(|data| {
+        println!("{data}");
+    }));
+    rusqlite::vtab::array::load_module(&db_connection).expect("Unable to load vtab array module");
 
     let db_source_path = app
         .path()
