@@ -22,7 +22,7 @@ export default function ListAssetsRoute() {
 
   return <div className="p-4">
     <div className="mt-2">
-      <Link className="block border rounded-sm p-2 w-32 flex justify-center items-center" to="/add-asset">Add Asset</Link>
+      <Link className="border rounded-sm p-2 w-32 flex justify-center items-center" to="/add-asset">Add Asset</Link>
     </div>
     { error && <div className="mt-2 text-red-600">{error}</div>}
     <div className="mt-4">

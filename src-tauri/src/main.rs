@@ -15,7 +15,10 @@ pub mod tag;
 pub mod database;
 pub mod invoke;
 
-fn seed_database(app: &App, connection: &Connection) -> Result<(), anyhow::Error> {
+fn seed_database(app: &App, connection: &mut Connection) -> Result<(), anyhow::Error> {
+    connection.trace(Some(|data| {
+        println!("{data}");
+    }));
     let db_source_path = app
         .path()
         .resolve(
@@ -39,7 +42,8 @@ fn recreate_database(app: &App) -> Connection {
         fs::remove_file(&db_path).expect("Unable to remove database file");
         // TODO: May need to wait for file to not exist in case of async removal
     }
-    let db_connection = Connection::open(&db_path).expect("Unable to get database connection");
+    let mut db_connection = Connection::open(&db_path).expect("Unable to get database connection");
+
     let db_source_path = app
         .path()
         .resolve(
@@ -53,7 +57,7 @@ fn recreate_database(app: &App) -> Connection {
         .execute_batch(&contents)
         .expect("Unable to bootstrap database");
 
-    // seed_database(app, &db_connection).expect("Unable to load seed data into database");
+    seed_database(app, &mut db_connection).expect("Unable to load seed data into database");
     
     return db_connection;
 }
