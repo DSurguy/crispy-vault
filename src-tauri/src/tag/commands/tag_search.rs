@@ -11,7 +11,7 @@ fn _tag_search(
 ) -> anyhow::Result<Vec<String>> {
     let connection = &state.lock().unwrap().connection;
     let mut stmt = connection
-        .prepare("SELECT text FROM tag_fts WHERE text MATCH ?1 AND NOT IN rarray(?2) ORDER BY rank LIMIT 20");
+        .prepare("SELECT text FROM tag_fts WHERE text MATCH ?1 AND text NOT IN rarray(?2) ORDER BY rank LIMIT 20")?;
     let existing_tags_vec = Rc::new(existing_tags.into_iter().map(Value::from).collect::<Vec<Value>>());
     let rows = stmt.query_map(params![&search, &existing_tags_vec], |row| {
         let text: String = row.get::<usize, String>(0)?;
