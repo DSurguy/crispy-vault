@@ -1,5 +1,5 @@
 import { twMerge } from "tailwind-merge";
-import { TbMenu2 } from "react-icons/tb";
+import { IconMenu2 } from "@tabler/icons-react";
 import OmniSearch from "../../components/OmniSearch/OmniSearch";
 
 type AppBarProps = {
@@ -16,7 +16,7 @@ export default function AppBar({ className, basis = "basis-12" }: AppBarProps) {
   return <div className={mergedClassName}>
     <div className={mergedIconWrapperClassName}>
       <button className="p-2 rounded-md bg-gray-100">
-        <TbMenu2 />
+        <IconMenu2 />
       </button>
     </div>
     <div className="flex grow h-full items-center">

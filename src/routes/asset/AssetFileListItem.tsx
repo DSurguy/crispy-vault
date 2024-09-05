@@ -1,6 +1,6 @@
 import { save } from "@tauri-apps/plugin-dialog";
 import { copyFile } from "@tauri-apps/plugin-fs";
-import { TbDownload, TbPencil } from "react-icons/tb";
+import { IconDownload, IconPencil } from "@tabler/icons-react";
 import { Asset, AssetFile } from "../../types";
 import { BaseDirectory, downloadDir } from "@tauri-apps/api/path";
 import { extensionToColor } from "../../utils/stringToColor";
@@ -35,8 +35,8 @@ export function AssetFileListItem({ asset, file, onEditClick }: AssetFileListIte
       <div className="font-bold font-mono text-sm" style={{ color: extensionColor }}>{file.extension}</div>
     </div>
     <div className="ml-auto items-center h-full">
-      <button className="mx-2" onClick={handleDownloadFileClick}><TbDownload /></button>
-      <button className="mx-2" onClick={onEditClick}><TbPencil /></button>  
+      <button className="mx-2" onClick={handleDownloadFileClick}><IconDownload /></button>
+      <button className="mx-2" onClick={onEditClick}><IconPencil /></button>  
     </div>
   </div>
 }

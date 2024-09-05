@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { createBrowserRouter, Link, Outlet, redirect } from 'react-router-dom';
-import { TbHome } from "react-icons/tb";
+import { IconHome } from "@tabler/icons-react";  
 import HomeRoute from './routes/home/HomeRoute';
 import AddAssetRoute from './routes/add-asset/AddAssetRoute';
 import RootRoute from './routes/root/RootRoute';
@@ -15,7 +15,7 @@ export const router = createBrowserRouter([
     element: <RootRoute />,
     errorElement: <RouteError />,
     handle: {
-      crumb: () => <Link to="/"><TbHome /></Link>
+      crumb: () => <Link to="/"><IconHome /></Link>
     },
     children: [
       {
