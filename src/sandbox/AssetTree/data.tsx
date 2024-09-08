@@ -125,10 +125,15 @@ while(ref !== undefined) {
 export interface TreeItem extends RawTreeItem {
   depth: number;
   hidden: boolean;
+  expanded?: boolean;
 }
 
-export const data = list.map(([id, depth]) => ({
-  ...itemMap.get(id)!,
-  depth,
-  hidden: depth === 0 ? false : true
-})) as TreeItem[];
+export const data = list.map(([id, depth]) => {
+  const item = itemMap.get(id)!
+  return {
+    ...item,
+    depth,
+    hidden: false,
+    expanded: item.isAsset ? false : true
+  }
+}) as TreeItem[];
