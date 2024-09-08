@@ -100,8 +100,6 @@ itemChildren.forEach((children, key) => {
   )
 })
 
-console.log(itemMap, itemChildren);
-
 // perform DFS and construct tree list
 // Assumes children are correctly sorted
 let list: [id: string, depth: number][] = []
