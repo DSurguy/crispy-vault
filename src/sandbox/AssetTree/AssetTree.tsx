@@ -114,6 +114,7 @@ export default function AssetTree({ className }: AssetTreeProps) {
     setDragItem(items.find(v => v.uuid === active.id) || null)
   }
 
+  // TODO: Prompt for move? (setting???)
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     setDragItem(null)
     if( !over ) return;
@@ -126,22 +127,24 @@ export default function AssetTree({ className }: AssetTreeProps) {
       const sourceIndex = items.findIndex(v => v.uuid === active.id)
       const sourceItem = items[sourceIndex];
 
+      if( sourceItem.parent === destinationItem.uuid) return;
+
       if( activeData.type === 'folder') {
         // grab the entire slice and move it
         let end = sourceIndex;
         for(let i=sourceIndex+1; i<items.length; i++) {
-          end = i;
           if( items[i].depth <= sourceItem.depth ) {
             break;
           }
+          end = i;
         }
         const slice = nextItems.splice(sourceIndex, end-sourceIndex+1)
         const depthDiff = sourceItem.depth - (destinationItem.depth + 1);
-        slice.forEach(v => v.depth - depthDiff);
+        slice.forEach(v => v.depth = v.depth - depthDiff);
         
         // Find out where this folder resides in the sorted folder list, then insert it there
         let insertIndex: null | number = null;
-        for(let i=destinationIndex; i<items.length; i++) {
+        for(let i=destinationIndex+1; i<items.length; i++) {
           const itemToCheck = items[i];
           
           if( itemToCheck.depth === destinationItem.depth + 1 ) {
