@@ -196,6 +196,7 @@ export default function AssetTree({ className }: AssetTreeProps) {
           }
           return <TreeFolder key={item.uuid} item={item} onClick={() => handleFolderClick(item)} />
         })}
+        {/* TODO: Add a droppable for "top level" below the list */}
       </div>
     </DndContext>
   </div>
