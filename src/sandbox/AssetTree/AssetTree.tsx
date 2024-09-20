@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { IconChevronDown, IconChevronRight, IconFolder } from "@tabler/icons-react";
+import { IconChevronDown, IconChevronRight, IconCornerLeftUpDouble, IconFolder } from "@tabler/icons-react";
 import { DndContext, DragEndEvent, DragOverlay, DragStartEvent, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from "@dnd-kit/core";
 import { data, TreeItem } from './data';
 
@@ -8,6 +8,7 @@ const Spacer = () => <div className="block w-4 h-full"></div>
 
 interface TreeProps {
   item: TreeItem;
+  dragItem?: null|TreeItem;
 }
 
 interface TreeFolderProps extends TreeProps {
@@ -42,7 +43,7 @@ const TreeFolder = ({ item, onClick }: TreeFolderProps) => {
 
 interface TreeAssetProps extends TreeProps {}
 
-const TreeAsset = ({ item }: TreeAssetProps) => {
+const TreeAsset = ({ dragItem, item }: TreeAssetProps) => {
   const spaces = useMemo(() => {
     return new Array(item.depth).fill(0).map((_, index) => <Spacer key={index} />)
   }, [item.depth])
@@ -54,7 +55,7 @@ const TreeAsset = ({ item }: TreeAssetProps) => {
     }
   })
   
-  const className = twMerge("flex hover:bg-gray-100 cursor-pointer", isDragging && "opacity-30")
+  const className = twMerge("flex", !dragItem && "hover:bg-gray-100 cursor-pointer", isDragging && "opacity-30")
 
   return <div ref={setNodeRef} className={className} {...listeners} {...attributes}>
     <div className="flex">{spaces}</div>
@@ -66,10 +67,30 @@ type AssetTreeProps = {
   className?: string;
 }
 
+type TopLevelDroppableProps = {
+  className?: string;
+  dragItem?: null|TreeItem;
+}
+
+const TopLevelDroppable = ({ className, dragItem }: TopLevelDroppableProps) => {
+  const { isOver, setNodeRef: setDroppableNodeRef } = useDroppable({
+    id: "__TOP__"
+  })
+
+  const mergedClassName = twMerge("flex items-center", isOver && "ring-2 ring-teal-500 ring-inset bg-gray-100", className)
+  const iconClassName = twMerge("ml-4", isOver ? "text-gray-400" : "text-gray-300");
+
+  return <div ref={setDroppableNodeRef} className={mergedClassName}>
+    {(!!dragItem || isOver )&& (
+      <IconCornerLeftUpDouble size={32} className={iconClassName} />
+    )}
+  </div>
+}
+
 export default function AssetTree({ className }: AssetTreeProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
+      activationConstraint: { 
         distance: 10,
       },
     })
@@ -122,8 +143,19 @@ export default function AssetTree({ className }: AssetTreeProps) {
     try {
       const nextItems = [...items]
       const activeData = active.data.current as unknown as { type: string }; // TODO: this can probably explode
-      let destinationIndex = items.findIndex(v => v.uuid === over.id);
-      const destinationItem = items[destinationIndex];
+      let destinationIndex: number;
+      let destinationItem: { uuid?: string; depth: number };
+      if( over.id === "__TOP__" ){
+        destinationIndex = -1;
+        destinationItem = {
+          uuid: undefined,
+          depth: -1
+        };
+      }
+      else {
+        destinationIndex = items.findIndex(v => v.uuid === over.id)
+        destinationItem = items[destinationIndex];
+      }
       const sourceIndex = items.findIndex(v => v.uuid === active.id)
       const sourceItem = items[sourceIndex];
 
@@ -150,6 +182,10 @@ export default function AssetTree({ className }: AssetTreeProps) {
             if( sourceItem.name < itemToCheck.name ) {
               // This is an asset, and we're now in the sorted position, insert right before this item
               insertIndex = i;
+              break;
+            } else if( i === nextItems.length-1 ) {
+              // We're at the end of the list
+              insertIndex = i+1;
               break;
             }
           }
@@ -214,20 +250,21 @@ export default function AssetTree({ className }: AssetTreeProps) {
   return <div className={mergedClassName}>
     <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
       {/* TODO: Apply offset to put the overlay at the mouse */}
-      <DragOverlay className="border border-dashed border-blue-400" dropAnimation={null}>
+      <DragOverlay className="border border-dashed border-blue-400 flex justify-center items-center" dropAnimation={null}>
         { dragItem ? ( 
           <div className="flex justify-center items-center opacity-50">{!dragItem.isAsset && <IconFolder size={16} className="mr-1" />}{dragItem.name}</div>
         ) : null}
       </DragOverlay>
-      <div className="overflow-auto h-full w-full">
+      <div className="overflow-auto w-full max-h-[calc(100%-64px)]">
         {filteredItems.map((item) => {
           if (item.isAsset) {
-            return <TreeAsset key={item.uuid} item={item} />
+            return <TreeAsset key={item.uuid} dragItem={dragItem} item={item} />
           }
-          return <TreeFolder key={item.uuid} item={item} onClick={() => handleFolderClick(item)} />
+          return <TreeFolder key={item.uuid} dragItem={dragItem} item={item} onClick={() => handleFolderClick(item)} />
         })}
         {/* TODO: Add a droppable for "top level" below the list */}
       </div>
+      <TopLevelDroppable className="h-[64px]" dragItem={dragItem} />
     </DndContext>
   </div>
 }

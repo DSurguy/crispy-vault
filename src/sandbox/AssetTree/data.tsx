@@ -65,6 +65,10 @@ const assets: RawTreeItem[] = [{
   name: 'Test Asset 5',
   parent: 'f25a639e-7198-464f-91f6-8aa9e2fa3642',
   isAsset: true
+}, {
+  uuid: '61941e17-43ea-459d-b7af-8ed6e3d29804',
+  name: 'Parentless Loser',
+  isAsset: true
 }]
 
 // Only sort based on isAsset and name, assumes same parent
