@@ -130,8 +130,45 @@ export default function AssetTree({ className }: AssetTreeProps) {
       if( sourceItem.parent === destinationItem.uuid) return;
       else sourceItem.parent = destinationItem.uuid
 
-      if( activeData.type === 'folder') {
-        // Grab the entire slice and move it
+      if( activeData.type === 'asset' ){
+        const slice = nextItems.splice(sourceIndex, 1);
+        slice[0].depth = destinationItem.depth + 1;
+        if ( destinationIndex > sourceIndex ) {
+          destinationIndex -= 1;
+        }
+
+        // Find out where this folder resides in the sorted folder list, then insert it there
+        let insertIndex: null | number = null;
+        for(let i=destinationIndex+1; i<nextItems.length; i++) {
+          const itemToCheck = nextItems[i];
+          
+          if( itemToCheck.depth === destinationItem.depth + 1 ) {
+            if( !itemToCheck.isAsset ) {
+              continue;
+            }
+            
+            if( sourceItem.name < itemToCheck.name ) {
+              // This is an asset, and we're now in the sorted position, insert right before this item
+              insertIndex = i;
+              break;
+            }
+          }
+          else if( itemToCheck.depth > destinationItem.depth + 1) continue; // Not a direct child
+          else {
+            // No more children, insert at the end
+            insertIndex = i
+            break;
+          }
+        }
+        if (insertIndex === null ){
+          // there were no children, insert after the destination item
+          insertIndex = destinationIndex + 1;
+        }
+        nextItems.splice(insertIndex, 0, ...slice);
+        setItems(nextItems);
+      }
+      else { // folder
+        // Grab the entire folder structure and move it
         let end = sourceIndex;
         for(let i=sourceIndex+1; i<items.length; i++) {
           if( items[i].depth <= sourceItem.depth ) {
@@ -153,20 +190,14 @@ export default function AssetTree({ className }: AssetTreeProps) {
           
           if( itemToCheck.depth === destinationItem.depth + 1 ) {
             // this is a direct child
-            if( itemToCheck.isAsset ) {
-              // Not a folder. If we're still here, we need to insert before this item.
+            if( itemToCheck.isAsset || sourceItem.name < itemToCheck.name ) {
+              // Either we've reached sorted position or run out of folders
               insertIndex = i;
               break;
             }
           }
           else if( itemToCheck.depth > destinationItem.depth + 1) continue; // Not a direct child
           else break; // no more children
-
-          if( sourceItem.name < itemToCheck.name ) {
-            // This is a folder, and we're now in the sorted position, insert right before this item
-            insertIndex = i;
-            break;
-          }
         }
         if (insertIndex === null ){
           // there were no children, insert after the destination item
@@ -174,11 +205,6 @@ export default function AssetTree({ className }: AssetTreeProps) {
         }
         nextItems.splice(insertIndex, 0, ...slice);
         setItems(nextItems);
-      }
-      else {
-        // just move the one item
-        nextItems.splice(sourceIndex, 1);
-        // TODO
       }
     } catch (e) {
       console.error(e);
