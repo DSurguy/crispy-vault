@@ -2,7 +2,7 @@
 This project intends to become a generalized desktop application for managing assets related to audio composition and production. Assets will be stored on a network-accessible location since many contracts prevent the use of cloud storage.
 
 ## Current Status
-This project is not complete, and is currently abandoned, and I've used it primarily to learn some rust and experiment with Tauri as an alternative to Electron.
+This project is not complete, and is currently abandoned, and I've used it primarily to learn some rust and experiment with Tauri as an alternative to Electron. This was fun and difficult. I'm not sure that rust and I will ever be friends, but we can coexist.
 
 # Setting Up & Tech Stack
 This project runs on https://tauri.app/, which is a rust-based desktop web application framwork (like Electron). It aims to be lightweight and performant.
@@ -33,3 +33,14 @@ Same place as the files, it's sqlite. Feel free to hack away, the data is yours!
 - Upload, edit and delete files on assets (it's really copying to the share dir)
 - WIP Omnisearch - try typing `tag:test`. It doesn't actually search, but it does pull from the db.
 - WIP drag-and-drop treeview. Modify `index.html` to point at `/src/sandbox/main.tsx` instead and you can play with that.
+
+### Did you do something dumb and rewrite this project in golang at one point?
+`<_<` `>_>`
+
+... https://github.com/DSurguy/crispy-vault-golang
+
+I may have struggled to correctly interpret a rust sqlite error that indicated my query was wrong, and rage-rewrote the entire app in a day. I then had the EXACT SAME ERROR IN GOLANG. Light bulb went on at that point.
+
+See https://github.com/DSurguy/crispy-vault/commit/019751a4ac2569bbcddae57a68a6387461fbb7a5
+
+Turns out wails is pretty cool as a tauri alternative in golang.
